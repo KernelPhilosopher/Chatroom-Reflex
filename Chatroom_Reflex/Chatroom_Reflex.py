@@ -3,6 +3,71 @@ import reflex as rx
 from .db_manager import db
 from typing import List, Dict
 
+# Estilos personalizados
+chat_styles = {
+    "chat_container": {
+        "background": "#111b21",  # Fondo oscuro estilo WhatsApp Web
+        "min_height": "100vh",
+        "display": "flex",
+        "flex_direction": "column",
+        "color": "#e9edef",  # Texto claro para fondo oscuro
+    },
+    "header": {
+        "background": "#202c33",  # Color de encabezado de WhatsApp
+        "padding": "1rem",
+        "border_bottom": "1px solid #2f3b43",
+        "position": "sticky",
+        "top": "0",
+        "z_index": "100",
+    },
+    "status_bar": {
+        "background": "#005c4b",  # Verde WhatsApp para estados positivos
+        "padding": "0.5rem",
+        "border_radius": "md",
+        "margin_bottom": "0.5rem",
+        "font_size": "0.9em",
+    },
+    "messages_area": {
+        "flex": "1",
+        "overflow_y": "auto",
+        "padding": "1rem",
+        "background": "#111b21",
+        "display": "flex",
+        "flex_direction": "column",
+        "gap": "0.5rem",
+    },
+    "message_card": {
+        "background": "#202c33",
+        "border_radius": "lg",
+        "padding": "0.75rem",
+        "max_width": "85%",
+        "width": "fit-content",
+        "margin": "0.25rem 0",
+        "_hover": {"background": "#2a3942"},
+    },
+    "input_area": {
+        "background": "#202c33",
+        "padding": "1rem",
+        "border_top": "1px solid #2f3b43",
+        "position": "sticky",
+        "bottom": "0",
+        "width": "100%",
+    },
+    "input_style": {
+        "background": "#2a3942",
+        "border": "none",
+        "color": "#e9edef",
+        "padding": "0.75rem",
+        "_placeholder": {"color": "#8696a0"},
+        "_focus": {"border": "1px solid #00a884"},
+    },
+    "button_style": {
+        "background": "#00a884",  # Verde WhatsApp
+        "color": "white",
+        "_hover": {"background": "#008f72"},
+    },
+}
+
 
 class State(rx.State):
     """El estado de la aplicación."""
@@ -77,205 +142,172 @@ class State(rx.State):
 
 
 def message_card(message: Dict) -> rx.Component:
-    """Tarjeta para mostrar un mensaje."""
+    is_reply = message.get("parent_user") is not None
     return rx.box(
         rx.vstack(
-            # Si es una respuesta, mostrar el mensaje original
+            # Respuesta al mensaje original
             rx.cond(
-                message.get("parent_user") is not None,
+                is_reply,
                 rx.box(
                     rx.text(
-                        f"↳ Respuesta a {message['parent_user']}: {message['parent_text']}",
-                        font_size=["0.7em", "0.8em"],
-                        color="gray.600",
+                        f"↳ {message['parent_user']}: {message['parent_text']}",
+                        font_size="0.8em",
+                        color="#8696a0",
                         font_style="italic",
                     ),
-                    padding=["0.3rem", "0.5rem"],
-                    bg="rgba(234, 234, 234, 0.7)",
+                    padding="0.5rem",
+                    background="#2a3942",
                     border_radius="md",
                     margin_bottom="0.5rem",
                     width="100%",
                 ),
             ),
-            # Mensaje actual
+            # Contenido del mensaje
             rx.hstack(
                 rx.avatar(
                     name=message["user"],
-                    size=["1", "2"],
-                    bg="blue.500",
+                    size="3",
+                    bg="#00a884",
+                    color="white",
                 ),
                 rx.vstack(
                     rx.text(
                         message["user"],
-                        weight="bold",
-                        font_size=["0.8em", "0.9em"],
-                        color="gray.800",
+                        font_weight="bold",
+                        color="#00a884",
+                        font_size="0.9em",
                     ),
                     rx.text(
                         message["text"],
-                        font_size=["0.9em", "1em"],
-                        color="gray.700",
+                        color="#e9edef",
+                        font_size="0.95em",
                     ),
                     align_items="flex-start",
+                    spacing="2",
                 ),
-                rx.spacer(),
-                rx.button(
-                    "↩ Responder",
-                    on_click=lambda: State.set_reply_to(message["id"]),
-                    size="1",
-                    variant="ghost",
-                    color="blue.500",
-                    _hover={"bg": "blue.50"},
-                ),
-                spacing=["2", "3"],
                 width="100%",
+                spacing="3",
             ),
+            # Botón de responder (solo visible en desktop)
+            rx.button(
+                "↩ Responder",
+                on_click=lambda: State.set_reply_to(message["id"]),
+                variant="ghost",
+                color="#00a884",
+                size="1",
+                display=["none", "block"],
+                position="absolute",
+                right="0.5rem",
+                top="0.5rem",
+                _hover={"background": "#2a3942"},
+            ),
+            spacing="2",
+            position="relative",
         ),
-        bg="white",
-        padding=["0.75rem", "1rem"],
-        border_radius="lg",
-        width="100%",
-        margin_bottom="0.5rem",
-        box_shadow="0 1px 3px rgba(0,0,0,0.12)",
-        _hover={"box_shadow": "0 2px 4px rgba(0,0,0,0.15)"},
+        style=chat_styles["message_card"],
     )
 
 
 def index() -> rx.Component:
-    """Interfaz principal."""
     return rx.box(
-        rx.container(
-            rx.vstack(
-                rx.heading(
-                    "Chatroom Global 💬",
-                    size=["6", "8"],
-                    margin_bottom="1rem",
-                    background="linear-gradient(135deg, #2563EB, #1D4ED8)",
-                    background_clip="text",
-                    padding=["0.5rem", "1rem"],
-                ),
-                # Estado de conexión
-                rx.box(
-                    rx.hstack(
-                        rx.text(
-                            State.status,
-                            font_size=["0.8em", "0.9em"],
-                            color="gray.700",
-                        ),
-                        rx.cond(
-                            State.status.contains("❌"),
-                            rx.button(
-                                "🔄 Reconectar",
-                                on_click=State.reconnect,
-                                size="1",
-                                color_scheme="blue",
-                            ),
-                        ),
-                        justify="between",
-                    ),
-                    bg="blue.50",
-                    padding=["0.5rem", "0.75rem"],
-                    border_radius="md",
-                    width="100%",
-                    margin_bottom="1rem",
-                    border="1px solid",
-                    border_color="blue.100",
-                ),
-                # Área de mensajes
-                rx.box(
-                    rx.cond(
-                        State.messages.length() > 0,
-                        rx.foreach(State.messages, message_card),
-                        rx.text(
-                            "No hay mensajes. ¡Escribe el primero!",
-                            color="gray.500",
-                            text_align="center",
-                            padding="2rem",
-                            font_size=["0.9em", "1em"],
-                        ),
-                    ),
-                    height=["60vh", "50vh"],
-                    width="100%",
-                    border="1px solid",
-                    border_color="gray.200",
-                    border_radius="lg",
-                    padding=["0.75rem", "1rem"],
-                    overflow_y="auto",
-                    margin_bottom="1rem",
-                    bg="gray.50",
-                ),
-                # Área de respuesta
+        # Encabezado
+        rx.box(
+            rx.heading(
+                "Chatroom Global 💬",
+                size="4",
+                color="#e9edef",
+            ),
+            style=chat_styles["header"],
+        ),
+        # Estado de conexión
+        rx.box(
+            rx.hstack(
+                rx.text(State.status),
                 rx.cond(
-                    State.replying_to != "",
-                    rx.box(
-                        rx.hstack(
-                            rx.text(
-                                "Respondiendo a un mensaje",
-                                color="gray.600",
-                                font_size=["0.8em", "0.9em"],
-                            ),
-                            rx.button(
-                                "❌ Cancelar",
-                                on_click=lambda: State.set_replying_to(""),
-                                size="1",
-                                variant="ghost",
-                                color="red.500",
-                            ),
-                        ),
-                        bg="gray.100",
-                        padding=["0.4rem", "0.5rem"],
-                        border_radius="md",
-                        width="100%",
+                    State.status.contains("❌"),
+                    rx.button(
+                        "🔄 Reconectar",
+                        on_click=State.reconnect,
+                        size="2",
+                        style=chat_styles["button_style"],
                     ),
                 ),
-                # Formulario de entrada
-                rx.vstack(
-                    rx.hstack(
-                        rx.input(
-                            placeholder="Tu nombre",
-                            value=State.username,
-                            on_change=State.set_username,
-                            width=["100%", "30%"],
-                            bg="white",
-                            border_color="gray.300",
-                            _hover={"border_color": "blue.500"},
-                        ),
-                        rx.input(
-                            placeholder="Escribe un mensaje...",
-                            value=State.current_message,
-                            on_change=State.set_current_message,
-                            width=["100%", "70%"],
-                            bg="white",
-                            border_color="gray.300",
-                            _hover={"border_color": "blue.500"},
-                        ),
-                        width="100%",
-                        flex_direction=["column", "row"],
-                        spacing=["2", "3"],
+                justify="between",
+            ),
+            style=chat_styles["status_bar"],
+        ),
+        # Área de mensajes
+        rx.box(
+            rx.cond(
+                State.messages.length() > 0,
+                rx.foreach(
+                    State.messages,
+                    message_card,
+                ),
+                rx.text(
+                    "No hay mensajes. ¡Escribe el primero!",
+                    color="#8696a0",
+                    text_align="center",
+                    padding="2rem",
+                ),
+            ),
+            style=chat_styles["messages_area"],
+        ),
+        # Área de respuesta
+        rx.cond(
+            State.replying_to != "",
+            rx.box(
+                rx.hstack(
+                    rx.text(
+                        "Respondiendo a un mensaje",
+                        color="#8696a0",
+                        font_size="0.9em",
                     ),
                     rx.button(
-                        "Enviar Mensaje",
-                        on_click=State.post_message,
-                        width="100%",
-                        margin_top="0.5rem",
-                        size="3",
-                        bg="blue.500",
-                        color="white",
-                        _hover={"bg": "blue.600"},
+                        "❌",
+                        on_click=lambda: State.set_replying_to(""),
+                        variant="ghost",
+                        color="#ef4444",
+                        size="1",
                     ),
-                    width="100%",
                 ),
-                spacing="4",
-                align="center",
-                width="100%",
-                max_width="800px",
+                padding="0.5rem 1rem",
+                background="#2a3942",
+                border_bottom="1px solid #2f3b43",
             ),
-            padding=["1rem", "2rem"],
-            width="100%",
         ),
-        bg="gray.100",
-        min_height="100vh",
-        padding_y="2rem",
+        # Área de entrada
+        rx.box(
+            rx.vstack(
+                rx.hstack(
+                    rx.input(
+                        placeholder="Tu nombre",
+                        value=State.username,
+                        on_change=State.set_username,
+                        width=["100%", "30%"],
+                        style=chat_styles["input_style"],
+                    ),
+                    rx.input(
+                        placeholder="Escribe un mensaje...",
+                        value=State.current_message,
+                        on_change=State.set_current_message,
+                        width=["100%", "70%"],
+                        style=chat_styles["input_style"],
+                    ),
+                    spacing="3",
+                ),
+                rx.button(
+                    "Enviar Mensaje",
+                    on_click=State.post_message,
+                    width="100%",
+                    style=chat_styles["button_style"],
+                ),
+                spacing="3",
+                width="100%",
+            ),
+            style=chat_styles["input_area"],
+        ),
+        style=chat_styles["chat_container"],
     )
 
 
