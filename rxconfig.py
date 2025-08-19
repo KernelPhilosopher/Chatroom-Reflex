@@ -10,7 +10,7 @@ base_url = (
 )
 
 config = rx.Config(
-    app_name="chatroom_reflex",  # cambiado a minúsculas y underscore
+    app_name="Chatroom_Reflex",  # Debe coincidir exactamente con el nombre de la carpeta
     api_url=base_url,
     deploy_url=base_url,
     frontend_path="frontend",
