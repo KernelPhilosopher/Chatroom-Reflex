@@ -3,14 +3,13 @@ import os
 from neo4j import GraphDatabase
 from dotenv import load_dotenv
 
-# Cargar .env solo en desarrollo
-if os.getenv("REFLEX_ENV") != "prod":
-    load_dotenv()
+# Cargar variables de entorno
+load_dotenv()
 
-# CONFIGURACIÓN DE BASE DE DATOS
-URI = os.getenv("NEO4J_URI")
-USER = os.getenv("NEO4J_USER")
-PASSWORD = os.getenv("NEO4J_PASSWORD")
+# CONFIGURACIÓN DE BASE DE DATOS con valores por defecto
+URI = os.getenv("NEO4J_URI", "neo4j://f7729929.databases.neo4j.io:7687")
+USER = os.getenv("NEO4J_USER", "neo4j")
+PASSWORD = os.getenv("NEO4J_PASSWORD", "599WXdyAaqWrMza5byKsFlkkZiX9Pjv9eOUVaVAFM3g")
 
 # Validar que tenemos todas las variables necesarias
 if not all([URI, USER, PASSWORD]):

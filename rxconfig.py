@@ -1,13 +1,15 @@
 import reflex as rx
 import os
 
-# Configuración básica
 config = rx.Config(
     app_name="Chatroom_Reflex",
-    env=rx.Env.DEV,  # Configuración por defecto para desarrollo
+    env=rx.Env.PROD,  # Cambiamos a producción
+    backend_port=8000,
+    frontend_port=3000,
+    api_url="/",
+    db_url="",  # No necesitamos base de datos SQL
     plugins=[
         rx.plugins.SitemapPlugin(),
         rx.plugins.TailwindV4Plugin(),
     ],
-    db_url="",  # No necesitamos base de datos SQL
 )
