@@ -1,1 +1,1 @@
-web: python -m reflex run --env prod --backend-only
+web: python -m reflex run --env prod

@@ -217,6 +217,13 @@ def index() -> rx.Component:
     )
 
 
+# Página de health check
+def healthz():
+    """Health check endpoint."""
+    return rx.text("OK")
+
+
 # Configuración de la app
 app = rx.App()
 app.add_page(index, on_load=State.on_load)
+app.add_page(healthz, route="/healthz")
